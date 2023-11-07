@@ -1,0 +1,265 @@
+import React, {useEffect, useState} from 'react';
+import {View, StyleSheet, Text, Image, Pressable} from 'react-native';
+import {Formik} from 'formik';
+import AppBtn from '../../../components/AppBtn';
+import colors from '../../../core/colors';
+import Input from '../../../components/AppInput';
+import {useDispatch, useSelector} from 'react-redux';
+import * as AuthActions from '../../../actions/auth';
+
+export const SignUpForm = (props: any) => {
+  const {navigation} = props;
+
+  // States
+  const [showPassword, setShowPassword] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+
+  // Redux
+  const authState = useSelector(state => state.auth);
+  const dispatch = useDispatch();
+
+  const goToLogIn = () => props.navigation.goBack();
+
+  // Effects
+  useEffect(() => {
+    if (authState.error) {
+      setTimeout(() => {
+        dispatch({
+          type: 'AUTH_ERROR',
+          payload: null,
+        });
+      }, 5000);
+    } else {
+    }
+  }, [authState.error]);
+
+  useEffect(() => {
+    if (authState.success) {
+      goToLogIn();
+    }
+  }, [authState.success]);
+
+  const handleSubmit = async (data: any) => {
+    try {
+      const register: any = AuthActions.signupUser(dispatch, data);
+    } catch (error: any) {
+      setIsBusy(false);
+      return error;
+    }
+    setIsBusy(false);
+  };
+
+  const validate = formValues => {
+    const errors = {};
+    if (!formValues.first_name) {
+      errors['first_name'] = 'Required';
+    }
+    if (!formValues.last_name) {
+      errors['last_name'] = 'Required';
+    }
+    if (!formValues.email) {
+      errors['email'] = 'Required';
+    } else if (
+      !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(formValues.email)
+    ) {
+      errors['email'] = 'Invalid email address';
+    }
+    if (
+      !/^(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~])(?=.*[A-Z])(?=.*[a-z]).{8,}$/.test(
+        formValues.password,
+      )
+    ) {
+      errors['password'] =
+        'Password must contain at least one special character, one uppercase letter, one lowercase letter, and be at least 8 characters long.';
+    }
+
+    return errors;
+  };
+
+  return (
+    <>
+      <Formik
+        validateOnChange={false}
+        validate={values => validate(values)}
+        initialValues={{
+          first_name: '',
+          last_name: '',
+          email: '',
+          password: '',
+        }}
+        onSubmit={values => {
+          handleSubmit(values);
+        }}>
+        {formikprops => (
+          <View style={styles.mainView}>
+            <Input
+              textInputProps={{
+                placeholder: 'First name',
+                onChangeText: formikprops.handleChange('first_name'),
+                value: formikprops.values.first_name,
+              }}
+              isError={formikprops.errors.first_name ? true : false}
+              error={formikprops.errors.first_name}
+              isVisible={formikprops.values.first_name.length > 0}
+            />
+
+            <Input
+              textInputProps={{
+                placeholder: 'Last name',
+                onChangeText: formikprops.handleChange('last_name'),
+                value: formikprops.values.last_name,
+              }}
+              isError={formikprops.errors.last_name ? true : false}
+              error={formikprops.errors.last_name}
+              isVisible={formikprops.values.last_name.length > 0}
+            />
+
+            <Input
+              textInputProps={{
+                placeholder: 'Email address',
+                keyboardType: 'email-address',
+                onChangeText: formikprops.handleChange('email'),
+                value: formikprops.values.email,
+              }}
+              isError={formikprops.errors.email ? true : false}
+              error={formikprops.errors.email}
+              isVisible={formikprops.values.email.length > 0}
+            />
+
+            <Input
+              textInputProps={{
+                placeholder: 'Password',
+                secureTextEntry: !showPassword,
+                onChangeText: formikprops.handleChange('password'),
+                value: formikprops.values.password.replace(/\s/g, ''),
+              }}
+              isError={formikprops.errors.password ? true : false}
+              isVisible={formikprops.values.password.length > 0}
+              error={formikprops.errors.password}
+              suffixIcon={
+                showPassword ? (
+                  <Pressable onPress={() => setShowPassword(!showPassword)}>
+                    <Image
+                      source={require('../../../assets/images/eye.png')}
+                      style={{width: 30, height: 20}}
+                    />
+                  </Pressable>
+                ) : (
+                  <Pressable onPress={() => setShowPassword(!showPassword)}>
+                    <Image
+                      source={require('../../../assets/images/eye-closed.png')}
+                      style={{width: 30, height: 20}}
+                    />
+                  </Pressable>
+                )
+              }
+            />
+
+            <View style={styles.passwordRequirements}>
+              <View style={styles.passwordRequirement}>
+                {formikprops.values.password.length >= 8 ? (
+                  <Image
+                    source={require('../../../assets/images/check.png')}
+                    style={{width: 15, height: 16}}
+                  />
+                ) : (
+                  <Image
+                    source={require('../../../assets/images/empty-check.png')}
+                    style={{width: 15, height: 16}}
+                  />
+                )}
+                <Text style={styles.passwordRequirementText}>
+                  Minimum of 8 characters
+                </Text>
+              </View>
+              <View style={styles.passwordRequirement}>
+                {/[A-Z]/.test(formikprops.values.password) ? (
+                  <Image
+                    source={require('../../../assets/images/check.png')}
+                    style={{width: 15, height: 16}}
+                  />
+                ) : (
+                  <Image
+                    source={require('../../../assets/images/empty-check.png')}
+                    style={{width: 15, height: 16}}
+                  />
+                )}
+
+                <Text style={styles.passwordRequirementText}>
+                  One UPPERCASE character
+                </Text>
+              </View>
+              <View style={styles.passwordRequirement}>
+                {/[!@#$%^&*?]/.test(formikprops.values.password) ? (
+                  <Image
+                    source={require('../../../assets/images/check.png')}
+                    style={{width: 15, height: 15}}
+                  />
+                ) : (
+                  <Image
+                    source={require('../../../assets/images/empty-check.png')}
+                    style={{width: 15, height: 15}}
+                  />
+                )}
+
+                <Text style={styles.passwordRequirementText}>
+                  One unique character (!@#$%^&*?)
+                </Text>
+              </View>
+            </View>
+            <View style={styles.createAccountView}>
+              <AppBtn
+                title="Sign Up"
+                onPress={formikprops.handleSubmit}
+                isBusy={isBusy}
+                isDisabled={
+                  !formikprops.values.email ||
+                  !formikprops.values.password ||
+                  isBusy
+                }
+              />
+            </View>
+          </View>
+        )}
+      </Formik>
+    </>
+  );
+};
+
+const styles = StyleSheet.create({
+  mainView: {
+    marginVertical: 10,
+  },
+  passwordText: {
+    marginBottom: 10,
+    color: colors.black,
+  },
+  instructionMainView: {
+    marginTop: 20,
+  },
+  firstTextView: {
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+  },
+  createAccountView: {
+    marginTop: 20,
+  },
+  passwordRequirements: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginTop: 20,
+  },
+  passwordRequirement: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+    marginTop: 5,
+  },
+  passwordRequirementText: {
+    marginLeft: 5,
+    color: colors.black,
+    fontFamily: 'DMSans Regular',
+  },
+});
